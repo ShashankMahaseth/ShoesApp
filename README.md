@@ -1,97 +1,120 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# ShoesApp - Auth Architecture Guide
 
-# Getting Started
+This README explains how authentication works in this project using Redux + Clean Architecture.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## 0) Required Packages
 
-## Step 1: Start Metro
+Install these packages for this auth architecture:
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
-
-To start the Metro dev server, run the following command from the root of your React Native project:
-
-```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
+```bash
+npm install @reduxjs/toolkit react-redux
+npm install @react-native-firebase/app @react-native-firebase/auth
+npm install @react-navigation/native @react-navigation/native-stack
+npm install react-native-safe-area-context react-native-screens
+npm install @react-native-vector-icons/ionicons react-native-size-matters
 ```
 
-## Step 2: Build and run your app
+Then for iOS:
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+```bash
+cd ios && pod install && cd ..
 ```
 
-### iOS
+## 1) Folder Structure (Auth Related)
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+```text
+ios/ShoesApp/src/
+  presentation/
+    screens/
+      AuthScreen.tsx
+  redux/
+    store/
+      store.ts
+    hooks/
+      hooks.ts
+    reducers/
+      AuthSlice.ts
+    thunk/
+      AuthThunk.ts
+  domain/
+    repositories/
+      AuthRepository.ts
+    usecase/
+      LoginUseCase.ts
+      SignUpUseCase.ts
+      ForgotUseCase.ts
+  data/
+    repositories/
+      AuthRepositoryImplementation.ts
+    datasource/
+      firebaseAuthDataSource.ts
 ```
 
-Then, and every time you update your native dependencies, run:
+## 2) Layer Responsibilities
 
-```sh
-bundle exec pod install
+- `presentation`  
+  UI and user actions only. No Firebase logic here.
+
+- `redux`  
+  App state and async orchestration (`pending/fulfilled/rejected`).
+
+- `domain`  
+  Business contracts and use cases. No framework dependency.
+
+- `data`  
+  Concrete implementation that talks to Firebase SDK.
+
+## 3) End-to-End Data Flow (Login/Signup)
+
+1. User types `email/password` in `AuthScreen.tsx`.
+2. User taps button -> `dispatch(loginThunk(...))` or `dispatch(signupThunk(...))`.
+3. `AuthThunk.ts` calls `LoginUseCase` / `SignUpUseCase`.
+4. Use case calls `AuthRepository` contract.
+5. `AuthRepositoryImplementation` executes datasource call.
+6. `firebaseAuthDataSource.ts` calls Firebase:
+   - `auth().signInWithEmailAndPassword(email, password)`
+   - `auth().createUserWithEmailAndPassword(email, password)`
+7. Result returns back through same chain.
+8. `AuthSlice.ts` updates Redux state:
+   - `pending` -> `status = "loading"`
+   - `fulfilled` -> `status = "authenticated"` (or unauthenticated)
+   - `rejected` -> `status = "error"`, set `error` message
+9. UI re-renders using `useAppSelector(state => state.auth)`.
+
+## 4) Current Redux Auth State
+
+`AuthSlice.ts` keeps:
+
+- `status`: `"idle" | "loading" | "authenticated" | "unauthenticated" | "error"`
+- `error`: `string | null`
+
+## 5) Where To Look For What
+
+- Add/change UI behavior: `presentation/screens/AuthScreen.tsx`
+- Change auth state logic: `redux/reducers/AuthSlice.ts`
+- Change async flow: `redux/thunk/AuthThunk.ts`
+- Change business rule: `domain/usecase/*`
+- Change API/Firebase implementation: `data/datasource/firebaseAuthDataSource.ts`
+
+## 6) Small Improvement To Remember
+
+In `logoutThunk`, call:
+
+```ts
+await repo.logout();
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+not:
 
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+```ts
+await repo.logout;
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+Otherwise logout method is not executed.
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+## 7) Quick Rule
 
-## Step 3: Modify your app
+UI should never call Firebase directly.  
+Always go through:
 
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+`Screen -> Thunk -> UseCase -> Repository ->RepositoryImpl-> DataSource -> Firebase -> back to AuthSlice -> AuthScreen`

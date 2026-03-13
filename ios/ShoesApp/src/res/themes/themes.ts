@@ -3,7 +3,8 @@ export interface ThemesColor{
     text:string,
     primary:string,
     card:string,
-    borderColor:string
+    borderColor:string,
+    icon:string
 }
 
 export const lightTheme:ThemesColor = {
@@ -11,12 +12,15 @@ export const lightTheme:ThemesColor = {
   text: "#111111",
   primary: "#4F46E5",
   card: "#F3F4F6",
-  borderColor:'#A8A8A9'
+  borderColor:'#A8A8A9',
+  icon:'#FFFFFF'
 }
 export const darkTheme:ThemesColor={
      card: "#161F28",
   text: "#FFFFFF",
   primary: "#6366F1",
   background: "#1A2530",
-  borderColor:'#A8A8A9'
+  borderColor:'#A8A8A9',
+  icon:'#161F28'
+  
 }

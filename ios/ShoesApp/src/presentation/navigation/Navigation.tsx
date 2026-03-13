@@ -8,6 +8,8 @@ import {
 } from "@react-navigation/native";
 import OnBoardingScreen from "../screens/onboardingScreen";
 import AuthScreen from "../screens/AuthScreen";
+import SplashScreen from "../screens/SplashScreen";
+import HomeScreen from "../screens/HomeScreen";
 import { useTheme } from "../../res/themes/useTheme";
 import { useColorScheme } from "react-native";
 const Stack = createNativeStackNavigator<RootParamList>();
@@ -34,15 +36,16 @@ const NavigationApp =() =>{
     return(
         <NavigationContainer theme={navigationTheme}>
            <Stack.Navigator
-           initialRouteName="OnBoarding"
+           initialRouteName="Splash"
              screenOptions={{
                 headerShown: false,
                 contentStyle: { backgroundColor: appTheme.background },
              }}
            >
+            <Stack.Screen name="Splash" component={SplashScreen}/>
             <Stack.Screen name="OnBoarding" component={OnBoardingScreen}/>
-
             <Stack.Screen name="AuthScreen" component={AuthScreen}/>
+            <Stack.Screen name="HomeScreen" component={HomeScreen}/>
 
            </Stack.Navigator>
         </NavigationContainer>
