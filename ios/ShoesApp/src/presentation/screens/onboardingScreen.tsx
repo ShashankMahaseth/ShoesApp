@@ -16,17 +16,21 @@ import { moderateScale } from 'react-native-size-matters';
 import { OnBoardingData, OnBoardingItem } from '../../constants/onBoardingData';
 import { useTheme } from '../../res/themes/useTheme';
 import DotIndicator from '../components/DotIndicator';
+
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
 import { RootParamList } from '../navigation/types/RootStackParamList';
+import { sessionUseCases } from '../../core/session/sessionModule';
 
 const OnBoardingScreen = () => {
     const colorScheme = useColorScheme();
     const theme = useTheme();
     const { width } = useWindowDimensions();
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [isCompleting, setIsCompleting] = useState(false);
     const lastIndex = OnBoardingData.length - 1;
-    const buttonLabel = currentIndex === 0 ? 'Get Started' : 'Next';
+    const buttonLabel = currentIndex >= lastIndex ? 'Continue' : currentIndex === 0 ? 'Get Started' : 'Next';
     const pagerRef = useRef<FlatList<OnBoardingItem>>(null);
     type OnboardingNavigationProp = NativeStackNavigationProp<
         RootParamList,
@@ -42,18 +46,24 @@ const OnBoardingScreen = () => {
         [width],
     );
 
-    const handleButtonPress = useCallback(() => {
+    const handleButtonPress = useCallback(async () => {
         if (currentIndex >= lastIndex) {
-            navigation.navigate('AuthScreen');
+            if (isCompleting) return;
+            setIsCompleting(true);
+            sessionUseCases.markFirstTimeDone.execute();
+            sessionUseCases.setLoggedIn.execute(false);
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'AuthScreen' }],
+            });
             return;
-
         }
 
         const nextIndex = currentIndex + 1;
         pagerRef.current?.scrollToIndex({ index: nextIndex, animated: true });
         setCurrentIndex(nextIndex);
 
-    }, [currentIndex, lastIndex, navigation]);
+    }, [currentIndex, isCompleting, lastIndex, navigation]);
 
     const renderItem: ListRenderItem<OnBoardingItem> = ({ item }) => (
         <View style={[styles.slide, { width }]}>
@@ -93,7 +103,7 @@ const OnBoardingScreen = () => {
                 />
                 <View style={styles.fixedControls}>
                     <DotIndicator currentIndex={currentIndex} total={OnBoardingData.length} />
-                    <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={
+                    <TouchableOpacity style={styles.button} activeOpacity={isCompleting ? 1 : 0.8} disabled={isCompleting} onPress={
                         handleButtonPress
 
                     }>
