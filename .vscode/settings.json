@@ -1,0 +1,8 @@
+{
+  "files.exclude": {
+    "**/storage": false,
+    "**/storage/**": false,
+    "**/storage/mmkv.ts": false,
+    "**/storage/authPrefs.ts": false
+  }
+}

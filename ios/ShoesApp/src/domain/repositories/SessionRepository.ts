@@ -5,3 +5,6 @@ export interface SessionRepository {
   setLoggedIn(value: boolean): void;
   clear(): void;
 }
+
+
+ 

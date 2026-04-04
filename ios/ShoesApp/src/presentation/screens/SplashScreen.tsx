@@ -25,6 +25,7 @@ const SplashScreen = () => {
       if (!isMounted) return;
 
       const isAuthed = Boolean(user);
+      
       sessionUseCases.setLoggedIn.execute(isAuthed);
 
       if (isAuthed) {

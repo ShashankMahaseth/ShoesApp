@@ -56,7 +56,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: moderateScale(24),
-        paddingVertical: moderateScale(20)
+        marginTop:moderateScale(12),
+        maxWidth:'auto',
+        paddingHorizontal:moderateScale(12)
     },
 
     list: {
